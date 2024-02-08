@@ -1,17 +1,12 @@
 import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
-import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:wallet_app/utilities/failure.dart';
+import 'package:wallet_app/services/failure.dart';
 import 'package:walletconnect_flutter_v2/apis/core/pairing/utils/pairing_models.dart';
 import 'package:walletconnect_flutter_v2/apis/sign_api/models/proposal_models.dart';
 import 'package:walletconnect_flutter_v2/apis/sign_api/models/sign_client_events.dart';
 import 'package:walletconnect_flutter_v2/apis/sign_api/models/sign_client_models.dart';
 import 'package:walletconnect_flutter_v2/apis/web3app/web3app.dart';
-import 'package:web3dart/web3dart.dart';
-
-import 'EthereumTransaction.dart';
 
 abstract class MetaMaskService {
   Future<void> openLinkInBrowser({required String link});
@@ -36,28 +31,41 @@ class MetaMaskServiceImp implements MetaMaskService {
       ConnectResponse resp = await wcClient.connect(
         requiredNamespaces: {
           'eip155': const RequiredNamespace(
-
-            chains: ["eip155:1"], // Ethereum chain
-            methods: ['personal_sign', 'eth_sign', 'eth_sendTransaction'], // Requestable Methods
+            // chains: ["eip155:1"], // Ethereum chain
+            chains: ["eip155:80001"],
+            methods: [
+              'personal_sign',
+              'eth_sign',
+              'eth_sendTransaction'
+            ], // Requestable Methods
             events: [], // Requestable Events
           )
         },
       );
+      
       Uri? uri = resp.uri;
       final link = formatNativeUrl(deepLink, uri.toString());
 
       onDisplayUri(link.toString());
+      // Fetch wallet balance
+
+      // final balance = await wcClient.getBalance();
+
+      // print('Wallet balance: $balance');
 
       return Right(resp);
     } catch (e) {
       Left(ConnectivityFailure(e.toString()));
     }
     return Left(ConnectivityFailure("error".toString()));
+    
   }
+  
+  
 
   Future<Web3App> createWeb3Instance() async {
     Web3App wcClient = await Web3App.createInstance(
-      projectId: '',
+      projectId: 'aa2f55bd083438976d9e912489dfdc53',
       metadata: const PairingMetadata(
         redirect: Redirect(),
         name: 'dApp (Requester)',
@@ -96,4 +104,5 @@ class MetaMaskServiceImp implements MetaMaskService {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
+  
 }
