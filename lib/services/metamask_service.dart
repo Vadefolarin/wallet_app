@@ -4,8 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:wallet_app/services/failure.dart';
 import 'package:walletconnect_flutter_v2/apis/core/pairing/utils/pairing_models.dart';
 import 'package:walletconnect_flutter_v2/apis/sign_api/models/proposal_models.dart';
+import 'package:walletconnect_flutter_v2/apis/sign_api/models/session_models.dart';
 import 'package:walletconnect_flutter_v2/apis/sign_api/models/sign_client_events.dart';
 import 'package:walletconnect_flutter_v2/apis/sign_api/models/sign_client_models.dart';
+import 'package:walletconnect_flutter_v2/apis/utils/namespace_utils.dart';
 import 'package:walletconnect_flutter_v2/apis/web3app/web3app.dart';
 
 abstract class MetaMaskService {
@@ -26,6 +28,7 @@ class MetaMaskServiceImp implements MetaMaskService {
     required Function(String uri) onDisplayUri,
   }) async {
     var deepLink = "metamask://wc?uri=";
+    SessionData? sessionData;
     try {
       Web3App wcClient = await createWeb3Instance();
       ConnectResponse resp = await wcClient.connect(
@@ -42,9 +45,18 @@ class MetaMaskServiceImp implements MetaMaskService {
           )
         },
       );
-      
       Uri? uri = resp.uri;
       final link = formatNativeUrl(deepLink, uri.toString());
+      // print('link+++ $link');
+
+      // if (link != null) {
+      //   // sessionData = await resp.session.future;
+
+      //   final String account = NamespaceUtils.getAccount(
+      //     sessionData!.namespaces.values.first.accounts.first,
+      //   );
+      //   print('account -----++++--------$account');
+      // }
 
       onDisplayUri(link.toString());
       // Fetch wallet balance
@@ -58,10 +70,7 @@ class MetaMaskServiceImp implements MetaMaskService {
       Left(ConnectivityFailure(e.toString()));
     }
     return Left(ConnectivityFailure("error".toString()));
-    
   }
-  
-  
 
   Future<Web3App> createWeb3Instance() async {
     Web3App wcClient = await Web3App.createInstance(
@@ -104,5 +113,4 @@ class MetaMaskServiceImp implements MetaMaskService {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
-  
 }

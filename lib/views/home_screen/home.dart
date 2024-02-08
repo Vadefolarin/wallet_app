@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:wallet_app/services/metamask_service.dart';
 import 'package:wallet_app/views/webview_screen/webview_screen.dart';
@@ -49,11 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         MetaMaskServiceImp().connectWithMetamaskWallet(
                           onSessionUpdate: (session) {
                             setState(() {
-                              print(
-                                  'session ${session.data()}--------------------------');
-                              _logs +=
-                                  '✅ connected\n\n${jsonEncode(session.data())}\n\n';
-                              print('session ${jsonEncode(session.data())}');
+                              print('session ${session.data()}-+++++++++++++=');
                             });
                           },
                           onDisplayUri: (uri) {
@@ -63,9 +60,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         ).then((result) {
                           result.fold((failure) {
                             print('Failed to connect: $failure');
-                          }, (connectResponse) {
-                            print('Connected successfully');
-                            print('Wallet address: $connectResponse');
+                          }, (connectResponse) async {
+                            print('Updated session+++++++++ $connectResponse');
+                            _sessionData = await connectResponse.session.future;
+                            final String account = NamespaceUtils.getAccount(
+                              _sessionData!
+                                  .namespaces.values.first.accounts.first,
+                            );
+                            print('account ++++++++--------$account');
+                            final client = Web3Client(
+                                'https://polygon-mumbai.infura.io/v3/d0f4119a707544e7b1fcbc93c9bf659e',
+                                Client());
+                            EthereumAddress address =
+                                EthereumAddress.fromHex(account);
+                            EtherAmount etherBalance =
+                                await client.getBalance(address);
+                            print(
+                                '+++===Ether balance at address: ${etherBalance.getValueInUnit(EtherUnit.ether)}');
                           });
                         });
 
