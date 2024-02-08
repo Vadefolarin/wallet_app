@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -6,6 +7,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import 'package:wallet_app/services/metamask_service.dart';
 import 'package:wallet_app/views/webview_screen/webview_screen.dart';
 import 'package:walletconnect_flutter_v2/walletconnect_flutter_v2.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -15,9 +17,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Web3App? _web3app;
+  // Web3App? _web3app;
   SessionData? _sessionData;
-  String _logs = '';
+  final bool _isConnected = false;
+  var token = '';
+  String maticAmount = '';
 
   late ValueNotifier<bool> _currentIndexNotifier;
   @override
@@ -31,6 +35,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final WebViewController controller =
+        WebViewController.fromPlatformCreationParams(
+            const PlatformWebViewControllerCreationParams());
+    controller
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(Uri.parse('https://google.com'));
     return Scaffold(
         // key: _messangerKey,
         body: ValueListenableBuilder(
@@ -75,15 +85,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 EthereumAddress.fromHex(account);
                             EtherAmount etherBalance =
                                 await client.getBalance(address);
+                            setState(() {
+                              maticAmount = etherBalance
+                                  .getValueInUnit(EtherUnit.ether)
+                                  .toString();
+                            });
+
+                            token =
+                                client.getTransactionCount(address).toString();
+
                             print(
                                 '+++===Ether balance at address: ${etherBalance.getValueInUnit(EtherUnit.ether)}');
                           });
                         });
-
-                        // _connectWithWallet('wc:');
-                      } else {
-                        setState(() => _logs = '');
-                      } // disconnect},
+                      } else {} // disconnect},
                     },
                     child: Container(
                       // height: 50,
@@ -99,9 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           horizontal: 20, vertical: 20),
                       child: Center(
                         child: Text(
-                          _currentIndexNotifier.value
-                              ? 'Connect'
-                              : 'Disconnect',
+                          _currentIndexNotifier.value ? 'Connected' : 'Connect',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -111,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   Text(
-                    'token: ${_currentIndexNotifier.value ? '9.1823' : '----'}',
+                    'token: ${_currentIndexNotifier.value ? '' : '----'}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -119,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 70),
                   Text(
-                    'matic: ${_currentIndexNotifier.value ? '0.0001' : '----'}',
+                    'matic: ${_currentIndexNotifier.value ? maticAmount : '----'}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -132,9 +145,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: double.infinity,
                   color: Colors.grey[200],
                   padding: const EdgeInsets.all(20),
-                  child: Text(
-                    _logs,
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  child: WebViewWidget(
+                    controller: _currentIndexNotifier.value == true
+                        ? controller
+                        : WebViewController.fromPlatformCreationParams(
+                            const PlatformWebViewControllerCreationParams(),
+                          ),
                   ),
                 ),
               )
