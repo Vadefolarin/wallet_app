@@ -92,7 +92,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/abi.json
     # - assets/icons/
     # - assets/new_theme_icons/
     # - assets/backgrounds/
