@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
+              Column(
                 children: [
                   InkWell(
                     onTap: () {
@@ -128,11 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 EthereumAddress.fromHex(account);
                             EtherAmount etherBalance =
                                 await web3client.getBalance(address);
-                            setState(() {
-                              maticAmount = etherBalance
-                                  .getValueInUnit(EtherUnit.ether)
-                                  .toString();
-                            });
 
                             token = web3client
                                 .getTransactionCount(address)
@@ -148,6 +143,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 await query('balanceOf', [toAddress]);
                             print('++++++++CELT Balance: $response');
                             setState(() {
+                              maticAmount = etherBalance
+                                  .getValueInUnit(EtherUnit.ether)
+                                  .toString();
                               celtAmount = response[0].toString();
                             });
                           });
