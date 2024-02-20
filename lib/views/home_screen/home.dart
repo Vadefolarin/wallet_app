@@ -25,7 +25,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // Web3App? _web3app;
-  SessionData? _sessionData;
   // ignore: unused_field
   final bool _isConnected = false;
   var token = '';
@@ -33,9 +32,16 @@ class _HomeScreenState extends State<HomeScreen> {
   String celtAmount = '';
   late Web3Client web3client;
   late DeployedContract contract;
-  String? account;
   String contractAddress = "0x3a31275aA3a516FAA6C0325aA7bDDD2FbCBBa666";
   String testAddress = '0xA32Ed59011F366632fb2D03a7A0Cade4cf11E4Ee';
+  String? account;
+  static String? _url;
+  String get deepLinkUrl => 'metamask://wc?uri=$_url';
+  // static const String launchError = 'Metamask wallet not installed';
+  // static const String kShortChainId = 'eip155';
+  // static const String kFullChainId = 'eip155:5';
+
+  static SessionData? _sessionData;
 
   late ValueNotifier<bool> _currentIndexNotifier;
   @override
@@ -62,11 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return result;
   }
 
-  Future<dynamic> submit(
-      String name, List<dynamic> args, BuildContext context) async {
-    final contract = await loadContract();
-    final encoded = contract.function("transfer").encodeCall(args);
-    return encoded;
+  Future approve(BuildContext context) async {
+    BigInt bigAmount = BigInt.from(10e18);
+    EthereumAddress toAddress = EthereumAddress.fromHex(testAddress);
+    var response = await submit("approve", [toAddress, bigAmount], context);
+    return response;
   }
 
   Future transferToken(BuildContext context) async {
@@ -74,6 +80,57 @@ class _HomeScreenState extends State<HomeScreen> {
     EthereumAddress toAddress = EthereumAddress.fromHex(testAddress);
     var response = await submit("transfer", [toAddress, bigAmount], context);
     return response;
+  }
+
+  Future<dynamic> submit(
+      String name, List<dynamic> args, BuildContext context) async {
+    final contract = await loadContract();
+    // final encoded = contract.function(name).encodeCall(args);
+    Web3App? wcClient = await createWeb3Instance();
+
+    Transaction transaction = Transaction.callContract(
+      from: EthereumAddress.fromHex(account!),
+      contract: contract,
+      function: contract.function(name),
+      parameters: args,
+    );
+
+    EthereumTransaction ethereumTransaction = EthereumTransaction(
+      from: account!,
+      to: contractAddress,
+      value: "0x0",
+      data: hex.encode(List<int>.from(transaction.data!)),
+
+      /// ENCODE TRANSACTION USING convert LIB
+    );
+    await launchUrlString(
+      deepLinkUrl,
+      mode: LaunchMode.externalApplication,
+    );
+
+    final signResponse = await wcClient.request(
+      topic: _sessionData!.topic,
+      chainId: "eip155:5",
+      request: SessionRequestParams(
+          method: 'eth_sendTransaction',
+          params: [ethereumTransaction.toJson()]),
+    );
+    return signResponse;
+  }
+
+  Future<Web3App> createWeb3Instance() async {
+    Web3App wcClient = await Web3App.createInstance(
+      projectId: 'aa2f55bd083438976d9e912489dfdc53',
+      metadata: const PairingMetadata(
+        redirect: Redirect(),
+        name: 'dApp (Requester)',
+        description: 'A dapp that can request that transactions be signed',
+        url: 'https://walletconnect.com',
+        icons: ['https://avatars.githubusercontent.com/u/37784886'],
+      ),
+    );
+
+    return wcClient;
   }
 
   @override
@@ -107,6 +164,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             });
                           },
                           onDisplayUri: (uri) {
+                            setState(() {
+                              _url = uri;
+                            });
                             launchUrlString(uri,
                                 mode: LaunchMode.externalApplication);
                           },
@@ -116,16 +176,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           }, (connectResponse) async {
                             print('Updated session+++++++++ $connectResponse');
                             _sessionData = await connectResponse.session.future;
-                            final String account = NamespaceUtils.getAccount(
+                            String walletAccount = NamespaceUtils.getAccount(
                               _sessionData!
                                   .namespaces.values.first.accounts.first,
                             );
-                            print('account ++++++++--------$account');
+                            print('account ++++++++--------$walletAccount');
                             web3client = Web3Client(
                                 'https://polygon-mumbai.infura.io/v3/d0f4119a707544e7b1fcbc93c9bf659e',
                                 Client());
                             EthereumAddress address =
-                                EthereumAddress.fromHex(account);
+                                EthereumAddress.fromHex(walletAccount);
                             EtherAmount etherBalance =
                                 await web3client.getBalance(address);
 
@@ -147,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   .getValueInUnit(EtherUnit.ether)
                                   .toString();
                               celtAmount = response[0].toString();
+                              account = walletAccount;
                             });
                           });
                         });
@@ -191,6 +252,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ],
+              ),
+              TextButton(
+                onPressed: () async {
+                  //Act when the button is pressed
+                  var response = await transferToken(context);
+                  print(response);
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                ),
+                child: const Text(
+                  'Transfer',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
               Expanded(
                 child: Container(
