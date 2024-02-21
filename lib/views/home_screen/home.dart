@@ -140,7 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const PlatformWebViewControllerCreationParams());
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse('https://google.com'));
+      ..loadRequest(
+          Uri.parse('https://bpe-cardiscardis.vercel.app/example/$account'));
     return Scaffold(
         // key: _messangerKey,
         body: ValueListenableBuilder(
@@ -253,6 +254,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+              Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                TextButton(
+                  onPressed: () async {
+                    //Act when the button is pressed
+                    var response = await approve(context);
+                    print(response);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
+                  child: const Text(
+                    'Approve',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               TextButton(
                 onPressed: () async {
                   //Act when the button is pressed
@@ -271,6 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              ]),
               Expanded(
                 child: Container(
                   width: double.infinity,
