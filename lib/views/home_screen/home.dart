@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final signResponse = await wcClient.request(
       topic: _sessionData!.topic,
-      chainId: "eip155:5",
+      chainId: "eip155:80001",
       request: SessionRequestParams(
           method: 'eth_sendTransaction',
           params: [ethereumTransaction.toJson()]),
@@ -141,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..loadRequest(
-          Uri.parse('https://bpe-cardiscardis.vercel.app/example/$account'));
+          Uri.parse('https://bpe-cardiscardis.vercel.app?account=$account'));
     return Scaffold(
         // key: _messangerKey,
         body: ValueListenableBuilder(
@@ -273,24 +273,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-              TextButton(
-                onPressed: () async {
-                  //Act when the button is pressed
-                  var response = await transferToken(context);
-                  print(response);
-                },
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                ),
-                child: const Text(
-                  'Transfer',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                TextButton(
+                  onPressed: () async {
+                    //Act when the button is pressed
+                    var response = await transferToken(context);
+                    print(response);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                  ),
+                  child: const Text(
+                    'Transfer',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
               ]),
               Expanded(
                 child: Container(
